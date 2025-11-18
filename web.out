@@ -1,0 +1,36 @@
+============================================================
+AETIM Web 應用程式啟動中...
+============================================================
+警告：NVD API 金鑰未設定 (NVD_API_KEY)。NVD 收集器將以低速率運行。
+警告：OpenAI API 金鑰未設定 (OPENAI_API_KEY)。AI 摘要功能將無法使用。
+[啟動] 排程狀態：啟用
+[啟動] 執行間隔：240 分鐘
+[啟動] 下次執行時間：2025-11-16 20:30:46
+[啟動] 開始執行啟動時的第一次任務...
+[啟動] 開始執行收集任務...
+訪問地址：http://localhost:5001 (容器內端口 5000)
+============================================================
+警告：NVD API 金鑰未設定 (NVD_API_KEY)。NVD 收集器將以低速率運行。
+警告：OpenAI API 金鑰未設定 (OPENAI_API_KEY)。AI 摘要功能將無法使用。
+ * Serving Flask app 'web_app'
+ * Debug mode: on
+錯誤 (Request)：抓取 NVD API 失敗 (狀態碼 N/A)：404 Client Error: Not Found for url: https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=200&pubStartDate=2025-11-15T08%3A30%3A46.656Z&pubEndDate=2025-11-16T08%3A30%3A46.656Z
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5002
+ * Running on http://192.168.0.130:5002
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+警告：NVD API 金鑰未設定 (NVD_API_KEY)。NVD 收集器將以低速率運行。
+警告：OpenAI API 金鑰未設定 (OPENAI_API_KEY)。AI 摘要功能將無法使用。
+資料庫連線成功：/Users/wilson/Documents/5. Projects/8.AI-Agent-aetim/aetim/aetim.db
+--- [Collector] 執行：CISA KEV (P0) ---
+[除錯] 使用主要 URL：https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+[除錯] 找到 1460 筆漏洞記錄
+--- [Collector] CISA KEV 完成。發現 0 筆新情資。 ---
+提示：所有漏洞已在資料庫中，或沒有新的漏洞。
+--- [Collector] 執行：NVD (P1) ---
+[NVD Debug] 正在抓取 2025-11-15T08:30:46.656Z 至 2025-11-16T08:30:46.656Z 的所有 CVEs...
+[NVD Debug] 抓取完成. 狀態: 404
+--- [Collector] NVD 完成。發現 0 筆新情資。 ---
+--- [Collector] 執行：RSS Feeds (P1/P2) ---

@@ -1,0 +1,36 @@
+# AETIM 專案依賴清單
+
+# 階段 1 (Setup)
+# pandas - 用於讀取資產 CSV
+# pyyaml - 用於讀取 config.yaml
+pandas
+pyyaml
+
+# 階段 2 (Collectors & AI)
+# requests - 用於呼叫 API (CISA, NVD)
+# feedparser - 用於解析 RSS (TWCERT, VMware)
+# sqlalchemy - (未來擴充用) 更強大的資料庫 ORM
+# openai - 用於 AI 摘要
+# google-generativeai - (備選 AI)
+requests
+feedparser
+sqlalchemy
+openai
+google-generativeai
+
+# 階段 2 & 3 (Scheduling & Reporting)
+# apscheduler - 用於排程任務
+# jinja2 - 用於生成 HTML/Markdown 報告
+# reportlab - 用於生成 PDF 報告（選用）
+apscheduler
+jinja2
+# reportlab  # 如需 PDF 功能可取消註解
+
+# 階段 5 (Web Interface)
+# flask - 用於建立 Web 應用程式
+flask
+flask-cors
+
+# 階段 5 (Security - Password Encryption)
+# cryptography - 用於 SMTP 密碼加密（符合 ISO 27001:2022）
+cryptography

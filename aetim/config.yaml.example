@@ -1,0 +1,67 @@
+database:
+  file: aetim.db
+assets:
+  csv_file: 資產清單 - Sheet1.csv
+api_keys:
+  nvd: ${NVD_API_KEY}
+  openai: ${OPENAI_API_KEY}
+threat_feeds:
+  cisa_kev: https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+  vmware_vmsa: https://www.vmware.com/security/advisories.xml
+  msrc: https://api.msrc.microsoft.com/cvrf/v2.0/updates
+  msrc_rss: https://msrc.microsoft.com/update-guide/rss
+  twcert_rss: https://www.twcert.org.tw/tw/rss-1-1.xml
+  twcert_cc_rss: https://www.twcert.org.tw/tw/rss-1-2.xml
+pir_keywords:
+- VMware ESXi 7.0
+- Windows Server 2016
+- Windows Server 2008 R2
+- Windows Server 2008
+- Microsoft SQL Server 2017
+- Microsoft SQL Server 2008 R2
+scheduler:
+  interval:
+    hours: 4
+    minutes: null
+reporting:
+  weekly_report:
+    enabled: true
+    schedule: monday 08:00
+  output_dir: ./reports
+  templates:
+    ciso_weekly:
+      enabled: true
+      format:
+      - html
+      - pdf
+      include_ai_summary: true
+    it_ticket:
+      enabled: true
+      format:
+      - text
+      - json
+notification:
+  email:
+    enabled: true
+    smtp_server: smtp.gmail.com
+    smtp_port: 587
+    smtp_username: your-email@gmail.com
+    # SMTP 密碼設定方式（三選一，優先順序由高到低）：
+    # 1. 環境變數（推薦，最安全）：密碼儲存在 .env 檔案或系統環境變數中
+    smtp_password: ${EMAIL_PASSWORD}
+    # 2. 加密字串：使用 encrypt_password.py 工具加密密碼後設定
+    # smtp_password: ENCRYPTED:xxxxx:yyyyy:zzzzz
+    # 3. 明碼（不推薦，不符合 ISO 27001:2022 規範）：僅用於測試環境
+    # smtp_password: your_password_here
+    from_address: your-email@gmail.com
+    to_address: default@company.com  # 預設收件者（保留向後相容）
+    use_tls: true
+    ciso_email: ciso@company.com
+    it_email: it@company.com
+  thresholds:
+    critical: 9.0
+    high: 7.0
+    medium: 4.0
+  channels:
+    email: true
+

@@ -1,0 +1,66 @@
+services:
+  # AETIM 主服務：排程器
+  aetim:
+    # 1. 使用我們剛才定義的 Dockerfile 進行建置
+    build: .
+    # 2. 給這個映像檔一個名稱
+    image: aetim-app:latest
+    # 3. 給容器一個固定的名稱
+    container_name: aetim_service
+    
+    # (*** 3.1 新增 ***)
+    # 自動重啟策略：
+    # 除非手動 'docker-compose stop'，否則一律重啟
+    restart: unless-stopped
+
+    # 4. (關鍵) 讀取 .env 檔案中的 API 金鑰
+    env_file:
+      - .env
+    
+    # 4.1. 設定時區為 Asia/Taipei (UTC+8)
+    environment:
+      - TZ=Asia/Taipei
+      
+    # 5. (關鍵) 磁碟區對應 (Volume Mapping)
+    # 將我們本機的程式碼對應到容器的 /app 目錄
+    # - 您在本機修改 .py 或 .yaml，容器內會「立即」同步
+    # - 容器內產生的 aetim.db 會「立即」出現在本機資料夾
+    volumes:
+      - .:/app
+      
+    # 6. 預設指令 (可被 Dockerfile 的 CMD 覆蓋，但我們保留)
+    # (*** 變更 ***)
+    # 預設啟動的指令 (會覆蓋 Dockerfile 的 CMD)
+    # 我們明確指定它啟動主排程器
+    command: ["python", "scheduler.py"]
+    
+    # 第一次啟動 'docker-compose up' 時會執行
+    # command: ["python", "setup_database.py"]
+    # 7. 重新啟動策略 (如果容器崩潰，自動重啟)
+    # restart: unless-stopped
+
+  # AETIM Web 服務：網頁界面
+  aetim-web:
+    build: .
+    image: aetim-app:latest
+    container_name: aetim_web_service
+    
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    # 設定時區為 Asia/Taipei (UTC+8)
+    environment:
+      - TZ=Asia/Taipei
+      
+    volumes:
+      - .:/app
+      
+    # Web 服務啟動命令
+    command: ["python", "web_app.py"]
+    
+    # 映射端口：5001 (Flask 預設端口 5000，但 macOS AirPlay 可能佔用 5000，改用 5001)
+    # 綁定到所有網路介面 (0.0.0.0)，允許外部連線
+    ports:
+      - "0.0.0.0:5001:5000"

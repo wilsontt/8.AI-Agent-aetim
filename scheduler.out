@@ -1,0 +1,2 @@
+錯誤 (Request)：抓取 NVD API 失敗 (狀態碼 N/A)：404 Client Error: Not Found for url: https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=200&pubStartDate=2025-11-15T08%3A27%3A12.260Z&pubEndDate=2025-11-16T08%3A27%3A12.260Z
+錯誤 (Request)：抓取 NVD API 失敗 (狀態碼 N/A)：404 Client Error: Not Found for url: https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=200&pubStartDate=2025-11-15T12%3A27%3A18.812Z&pubEndDate=2025-11-16T12%3A27%3A18.812Z

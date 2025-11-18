@@ -1,0 +1,17 @@
+# 忽略機敏資訊
+.env
+.vscode/
+
+# 忽略 Python 暫存檔
+__pycache__/
+*.pyc
+
+# 忽略本機產生的資料庫檔案
+*.db
+*.db-journal
+
+# 忽略 OS 暫存檔
+.DS_Store
+
+# 忽略 report 目錄
+aetim/reports/

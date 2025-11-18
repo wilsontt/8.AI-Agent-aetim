@@ -1,0 +1,55 @@
+services:
+  # AETIM 主服務：排程器
+  aetim:
+    build: .
+    image: aetim-app:latest
+    container_name: aetim_service
+    
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    environment:
+      - TZ=Asia/Taipei
+      
+    volumes:
+      - .:/app
+      
+    command: ["python", "scheduler.py"]
+
+  # AETIM Web 服務：網頁界面（生產環境）
+  aetim-web:
+    build: .
+    image: aetim-app:latest
+    container_name: aetim_web_service
+    
+    restart: unless-stopped
+    
+    env_file:
+      - .env
+    
+    environment:
+      - TZ=Asia/Taipei
+      - FLASK_ENV=production  # 生產環境模式
+      
+    volumes:
+      - .:/app
+      
+    command: ["python", "web_app.py"]
+    
+    # 生產環境：只綁定到 localhost，由 Nginx 反向代理
+    # 如果需要直接訪問，可以改為 "0.0.0.0:5001:5000"
+    ports:
+      - "127.0.0.1:5001:5000"
+    
+    # 可選：限制資源使用
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+

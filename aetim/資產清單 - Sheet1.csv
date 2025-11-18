@@ -1,0 +1,31 @@
+ITEM,IP,主機名稱,"作業系統
+(含版本)","運行的應用程式
+(含版本)",負責人,資料敏感度,"是否對外
+(Public-facing)",業務關鍵性
+1,"10.6.82.31～ 
+10.6.82.33",VMware 主機,"VMware ESXi, 7.0.3","VMware ESXi, 7.0.4",工程師,高,N,高
+2,"59.120.48.163
+(172.16.6.11)",文件倉儲管理系統（外部主機）,"Windows Server 2016 Standar 1607
+組件 14393.5717","自行開發 EEP(delphi7) 
+文件倉儲管理系統 v3.0",工程師,高,Y,高
+3,"10.6.82.11、12
+、14、17",文件倉儲管理系統（內部主機）,"Windows Server 2008 R2
+Service Pack 1","自行開發 EEP(delphi7) 
+文件倉儲管理系統 v3.0",工程師,高,N,高
+4,10.6.82.25,資料庫伺服器主機,"Windows Server 2016 Standar 1607
+組件 14393.5717",Microsoft SQL Server 2017 (RTM-GDR) (KB5046857) - 14.0.2070.1 (Standard Edition X64),工程師,高,N,高
+5,10.6.82.16,資料交換檔案傳輸系統主機,windows Server 2008,"自行開發 EEP(delphi7)
+文件倉儲資料傳輸系統 v3.0",工程師,高,Y,高
+6,10.6.82.15,資料交換轉檔系統主機,ubuntu server 22.04 ,"自行開發 Ruby On Rails
+文件倉儲資料資料轉檔系統 v3.0",工程師,高,N,高
+7,10.6.82.30,DC 網域管理伺服器,"Windows Server 2016 Standar 1607
+組件 14393.5125","AD 網域
+Active Directory 使用者和電腦
+Microsoft Corporation 
+版本：10.0.14393.4169",工程師,高,N,高
+8,10.9.82.30,Kaspersky Security Center 卡巴斯基防毒系統主機,Windows Server 2017,Server：15.1.0.20748,工程師,中,N,低
+9,"10.6.81.131～
+137",Kasparsky Endpoint Security for Windows 卡巴斯基 工作站,Windows 11,Client：12.9.0.384,工程師,中,N,低
+10,10.9.82.57,FineReport 報表伺服系統主機,ubuntu server 20.04 ,FineReport 報表伺系統 v11,工程師,中,N,高
+11,10.6.82.22,NAS 網路儲存系統,DSM 7.23,DSM 7.24,工程師,中,N,低
+12,10.6.81.254,Fortinet FG201F 防火牆 ,FortiOS v7.2.11,,工程師,高,Y,中
