@@ -630,13 +630,17 @@
             });
             
             // 顯示選中的頁籤內容
-            if (tabName === 'settings') {
-                document.getElementById('settings-tab').classList.add('active');
-                document.querySelectorAll('.tab-button')[1].classList.add('active');
-            } else if (tabName === 'status') {
-                document.getElementById('status-tab').classList.add('active');
-                document.querySelectorAll('.tab-button')[0].classList.add('active');
+            const tabContent = document.getElementById(tabName + '-tab');
+            if (tabContent) {
+                tabContent.classList.add('active');
             }
+            
+            // 找到對應的按鈕並激活（根據 onclick 屬性匹配）
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                if (btn.getAttribute('onclick') === `switchTab('${tabName}')`) {
+                    btn.classList.add('active');
+                }
+            });
         }
 
         // 更新日期時間
