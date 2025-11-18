@@ -357,262 +357,263 @@
             <button class="tab-button active" onclick="switchTab('settings')">設定與控制</button>
         </div>
         
-        <!-- 下半部：頁籤內容顯示 -->
-        <!-- 頁籤 1：設定與控制 -->
-        <div id="settings-tab" class="tab-content active">
-            <div class="middle-section" style="padding: 0; background: transparent; border: none;">
-            
-            <div class="config-grid">
-                <!-- 排程設定（整合基本排程與動態排程） -->
-                <div class="config-card">
-                    <h3>排程設定</h3>
-                    <div class="form-group">
-                        <label>排程狀態</label>
-                        <select id="schedulerStatus">
-                            <option value="enabled">啟用</option>
-                            <option value="disabled">停用</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>下次執行時間</label>
-                        <input type="text" id="nextRunTime" readonly value="計算中...">
-                    </div>
-                    <div class="form-group">
-                        <label>執行間隔（小時）</label>
-                        <select id="intervalHours">
-                            <option value="">不使用</option>
-                            <option value="1">1 小時</option>
-                            <option value="2">2 小時</option>
-                            <option value="4" selected>4 小時</option>
-                            <option value="6">6 小時</option>
-                            <option value="12">12 小時</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>執行間隔（分鐘）</label>
-                        <select id="intervalMinutes">
-                            <option value="">不使用</option>
-                            <option value="5">5 分鐘</option>
-                            <option value="10">10 分鐘</option>
-                            <option value="15">15 分鐘</option>
-                            <option value="30">30 分鐘</option>
-                        </select>
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <button class="btn btn-primary" onclick="updateScheduler()">更新排程設定</button>
-                    </div>
-                </div>
-
-                <!-- SMTP 設定 -->
-                <div class="config-card">
-                    <h3>SMTP 設定</h3>
-                    <div class="form-group">
-                        <label>SMTP 伺服器</label>
-                        <input type="text" id="smtpServer" placeholder="smtp.gmail.com">
-                    </div>
-                    <div class="form-group">
-                        <label>SMTP 埠口</label>
-                        <input type="number" id="smtpPort" placeholder="587" min="1" max="65535">
-                    </div>
-                    <div class="form-group">
-                        <label>SMTP 使用者名稱</label>
-                        <input type="text" id="smtpUsername" placeholder="your-email@gmail.com">
-                    </div>
-                    <div class="form-group">
-                        <label>SMTP 密碼</label>
-                        <input type="password" id="smtpPassword" placeholder="your-password">
-                    </div>
-                    <div class="form-group">
-                        <label>發送者 Email</label>
-                        <input type="email" id="emailFrom" placeholder="sender@company.com">
-                    </div>
-                    <div class="form-group">
-                        <label>使用 TLS</label>
-                        <select id="smtpUseTLS">
-                            <option value="true">是</option>
-                            <option value="false">否</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button class="btn btn-success" onclick="testSMTP()">測試 SMTP</button>
-                        <button class="btn btn-primary" onclick="updateSMTP()">儲存 SMTP 設定</button>
-                    </div>
-                </div>
-                
-                <!-- 週報排程設定 -->
-                <div class="config-card">
-                    <h3>週報排程設定（CISO 週報）</h3>
-                    <div class="form-group">
-                        <label>星期</label>
-                        <select id="weeklyDay">
-                            <option value="mon">週一 (mon)</option>
-                            <option value="tue">週二 (tue)</option>
-                            <option value="wed">週三 (wed)</option>
-                            <option value="thu">週四 (thu)</option>
-                            <option value="fri">週五 (fri)</option>
-                            <option value="sat">週六 (sat)</option>
-                            <option value="sun">週日 (sun)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>小時（0-23）</label>
-                        <input type="number" id="weeklyHour" min="0" max="23" value="8">
-                    </div>
-                    <div class="form-group">
-                        <label>分鐘（0-59）</label>
-                        <input type="number" id="weeklyMinute" min="0" max="59" value="0">
-                    </div>
-                    <div style="margin-top: 15px;">
-                        <button class="btn btn-primary" onclick="updateWeeklySchedule()">更新週報排程</button>
-                    </div>
-                </div>
-
-                <!-- 週報排程通知設定 -->
-                <div class="config-card">
-                    <h3>週報排程通知設定</h3>
-                    <div class="alert alert-info" style="margin-bottom:10px; font-size: 0.9em;">
-                        設定週報通知的收件者與啟用狀態。可使用「測試週報寄送」驗證設定是否正確。
-                    </div>
-                    <div class="form-group">
-                        <label>通知總開關</label>
-                        <select id="notifEnabled">
-                            <option value="true">啟用</option>
-                            <option value="false">停用</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Email 通知</label>
-                        <select id="emailEnabledWeekly">
-                            <option value="false">停用</option>
-                            <option value="true">啟用</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>CISO Email</label>
-                        <input type="email" id="emailCISOWeekly" placeholder="ciso@company.com">
-                    </div>
-                    <div class="form-group">
-                        <label>IT 團隊 Email</label>
-                        <input type="email" id="emailITWeekly" placeholder="it@company.com">
-                    </div>
-                    <div class="form-group">
-                        <label>週報收件者</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <label><input type="checkbox" id="typeWeeklyCISOConfig"> CISO</label>
-                                <label><input type="checkbox" id="typeWeeklyITConfig"> IT</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn btn-primary" onclick="saveWeeklyNotificationConfig()">儲存週報通知設定</button>
-                        <button class="btn btn-success" onclick="testSendWeekly()">測試週報寄送</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 手動立即觸發按鈕 -->
-            <div class="config-card" style="margin-top: 20px;">
-                <h3>手動立即觸發</h3>
-                <div class="btn-group">
-                    <button class="btn btn-success" onclick="triggerCollectors()">觸發收集任務</button>
-                    <button class="btn btn-success" onclick="triggerCorrelation()">觸發關聯分析</button>
-                    <button class="btn btn-success" onclick="triggerAll()">觸發全部（收集+分析）</button>
-                </div>
-            </div>
-            </div>
-            </div>
-        </div>
-
-        <!-- 頁籤 2：處理狀態與報告 -->
+        <!-- 下半部：頁籤內容顯示 --><!-- 頁籤 1：處理狀態與報告 -->
         <div id="status-tab" class="tab-content">
             <div class="bottom-section" style="padding: 0; background: transparent; border: none;">
-            <div class="status-grid">
-                <!-- 收集任務狀態 -->
-                <div class="status-card">
-                    <h3>收集任務與關聯分析</h3>
-                    <div>
-                        <span class="status-indicator status-idle" id="collectorsStatus">閒置</span>
-                        <div class="timestamp" id="collectorsTimestamp"></div>
-                    </div>
-                    <div id="collectorsMessage"></div>
-                    <div class="log-container" id="collectorsLogs"></div>
-                </div>
-
-                <!-- 關聯分析狀態 -->
-                <div class="status-card">
-                    <h3>關聯分析狀態</h3>
-                    <div>
-                        <span class="status-indicator status-idle" id="correlationStatus">閒置</span>
-                        <div class="timestamp" id="correlationTimestamp"></div>
-                    </div>
-                    <div id="correlationMessage"></div>
-                    <div class="log-container" id="correlationLogs"></div>
-                </div>
-
-                <!-- 報告生成 -->
-                <div class="status-card">
-                    <h3>報告生成</h3>
-                    <div style="margin-bottom: 10px; padding: 8px; background-color: #f0f0f0; border-radius: 4px; font-size: 0.9em; color: #666;">
-                        <strong>說明：</strong>報告類型用於生成不同格式的報告檔案。<br>
-                        • <strong>CISO 週報</strong>：管理層週報，包含威脅摘要、風險分析、建議措施（HTML/PDF 格式）<br>
-                        • <strong>IT 工單</strong>：技術層工單，包含具體的威脅資訊、受影響資產、修補建議（TEXT/JSON 格式）
-                    </div>
-                    <div>
-                        <span class="status-indicator status-idle" id="report_generationStatus">閒置</span>
-                        <div class="timestamp" id="report_generationTimestamp"></div>
-                    </div>
-                    <div id="report_generationMessage"></div>
-                    <div class="log-container" id="report_generationLogs" style="max-height: 200px; overflow-y: auto; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 0.9em;"></div>
-                    <div id="reportFilepath" style="margin-top: 10px;"></div>
-                    
-                    <div class="report-options">
-                        <div class="form-group">
-                            <label>報告類型</label>
-                            <select id="reportType">
-                                <option value="ciso_weekly">CISO 週報</option>
-                                <option value="it_ticket">IT 工單</option>
-                            </select>
+                <div class="status-grid">
+                    <!-- 收集任務狀態 -->
+                    <div class="status-card">
+                        <h3>收集任務與關聯分析</h3>
+                        <div>
+                            <span class="status-indicator status-idle" id="collectorsStatus">閒置</span>
+                            <div class="timestamp" id="collectorsTimestamp"></div>
                         </div>
-                        <div class="form-group">
-                            <label>檔案格式</label>
-                            <select id="reportFormat">
-                                <option value="html">HTML</option>
-                                <option value="json">JSON</option>
-                                <option value="text">TEXT</option>
-                            </select>
-                        </div>
+                        <div id="collectorsMessage"></div>
+                        <div class="log-container" id="collectorsLogs"></div>
                     </div>
-                    <button class="btn btn-primary" onclick="generateReport()">生成報告</button>
-                    <div id="reportFilepath" style="margin-top: 10px; font-size: 0.9em; color: #666;"></div>
+        
+                    <!-- 關聯分析狀態 -->
+                    <div class="status-card">
+                        <h3>關聯分析狀態</h3>
+                        <div>
+                            <span class="status-indicator status-idle" id="correlationStatus">閒置</span>
+                            <div class="timestamp" id="correlationTimestamp"></div>
+                        </div>
+                        <div id="correlationMessage"></div>
+                        <div class="log-container" id="correlationLogs"></div>
+                    </div>
+        
+                    <!-- 報告生成 -->
+                    <div class="status-card">
+                        <h3>報告生成</h3>
+                        <div
+                            style="margin-bottom: 10px; padding: 8px; background-color: #f0f0f0; border-radius: 4px; font-size: 0.9em; color: #666;">
+                            <strong>說明：</strong>報告類型用於生成不同格式的報告檔案。<br>
+                            • <strong>CISO 週報</strong>：管理層週報，包含威脅摘要、風險分析、建議措施（HTML/PDF 格式）<br>
+                            • <strong>IT 工單</strong>：技術層工單，包含具體的威脅資訊、受影響資產、修補建議（TEXT/JSON 格式）
+                        </div>
+                        <div>
+                            <span class="status-indicator status-idle" id="report_generationStatus">閒置</span>
+                            <div class="timestamp" id="report_generationTimestamp"></div>
+                        </div>
+                        <div id="report_generationMessage"></div>
+                        <div class="log-container" id="report_generationLogs"
+                            style="max-height: 200px; overflow-y: auto; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 0.9em;">
+                        </div>
+                        <div id="reportFilepath" style="margin-top: 10px;"></div>
+        
+                        <div class="report-options">
+                            <div class="form-group">
+                                <label>報告類型</label>
+                                <select id="reportType">
+                                    <option value="ciso_weekly">CISO 週報</option>
+                                    <option value="it_ticket">IT 工單</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>檔案格式</label>
+                                <select id="reportFormat">
+                                    <option value="html">HTML</option>
+                                    <option value="json">JSON</option>
+                                    <option value="text">TEXT</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateReport()">生成報告</button>
+                        <div id="reportFilepath" style="margin-top: 10px; font-size: 0.9em; color: #666;"></div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- 週報排程監視 - 滿版寬度 -->
-            <div class="status-card" style="grid-column: 1 / -1; width: 100%;">
-                <h3>週報排程監視</h3>
-                <div style="margin-bottom:10px">
-                    <button class="btn btn-primary" onclick="refreshWeeklyJobs()">重新整理</button>
-                    <button class="btn btn-success" onclick="testSendWeekly()">測試寄送（使用最新報告）</button>
+        
+                <!-- 週報排程監視 - 滿版寬度 -->
+                <div class="status-card" style="grid-column: 1 / -1; width: 100%;">
+                    <h3>週報排程監視</h3>
+                    <div style="margin-bottom:10px">
+                        <button class="btn btn-primary" onclick="refreshWeeklyJobs()">重新整理</button>
+                        <button class="btn btn-success" onclick="testSendWeekly()">測試寄送（使用最新報告）</button>
+                    </div>
+                    <div id="weeklyJobsSummary" class="alert alert-info" style="display:none;"></div>
+                    <div class="log-container" style="max-height: 300px;">
+                        <table style="width:100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:6px;">時間</th>
+                                    <th style="text-align:left; padding:6px;">階段</th>
+                                    <th style="text-align:left; padding:6px;">狀態</th>
+                                    <th style="text-align:left; padding:6px;">收件者</th>
+                                    <th style="text-align:left; padding:6px;">訊息</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weeklyJobsBody"></tbody>
+                        </table>
+                    </div>
                 </div>
-                <div id="weeklyJobsSummary" class="alert alert-info" style="display:none;"></div>
-                <div class="log-container" style="max-height: 300px;">
-                    <table style="width:100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th style="text-align:left; padding:6px;">時間</th>
-                                <th style="text-align:left; padding:6px;">階段</th>
-                                <th style="text-align:left; padding:6px;">狀態</th>
-                                <th style="text-align:left; padding:6px;">收件者</th>
-                                <th style="text-align:left; padding:6px;">訊息</th>
-                            </tr>
-                        </thead>
-                        <tbody id="weeklyJobsBody"></tbody>
-                    </table>
-                </div>
-            </div>
             </div>
         </div>
+
+        <!-- 頁籤 2：設定與控制 -->
+        <div id="settings-tab" class="tab-content active">
+            <div class="middle-section" style="padding: 0; background: transparent; border: none;">
+                <div class="config-grid">
+                    <!-- 排程設定（整合基本排程與動態排程） -->
+                    <div class="config-card">
+                        <h3>排程設定</h3>
+                        <div class="form-group">
+                            <label>排程狀態</label>
+                            <select id="schedulerStatus">
+                                <option value="enabled">啟用</option>
+                                <option value="disabled">停用</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>下次執行時間</label>
+                            <input type="text" id="nextRunTime" readonly value="計算中...">
+                        </div>
+                        <div class="form-group">
+                            <label>執行間隔（小時）</label>
+                            <select id="intervalHours">
+                                <option value="">不使用</option>
+                                <option value="1">1 小時</option>
+                                <option value="2">2 小時</option>
+                                <option value="4" selected>4 小時</option>
+                                <option value="6">6 小時</option>
+                                <option value="12">12 小時</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>執行間隔（分鐘）</label>
+                            <select id="intervalMinutes">
+                                <option value="">不使用</option>
+                                <option value="5">5 分鐘</option>
+                                <option value="10">10 分鐘</option>
+                                <option value="15">15 分鐘</option>
+                                <option value="30">30 分鐘</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="updateScheduler()">更新排程設定</button>
+                        </div>
+                    </div>
+
+                    <!-- SMTP 設定 -->
+                    <div class="config-card">
+                        <h3>SMTP 設定</h3>
+                        <div class="form-group">
+                            <label>SMTP 伺服器</label>
+                            <input type="text" id="smtpServer" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label>SMTP 埠口</label>
+                            <input type="number" id="smtpPort" placeholder="587" min="1" max="65535">
+                        </div>
+                        <div class="form-group">
+                            <label>SMTP 使用者名稱</label>
+                            <input type="text" id="smtpUsername" placeholder="your-email@gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label>SMTP 密碼</label>
+                            <input type="password" id="smtpPassword" placeholder="your-password">
+                        </div>
+                        <div class="form-group">
+                            <label>發送者 Email</label>
+                            <input type="email" id="emailFrom" placeholder="sender@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label>使用 TLS</label>
+                            <select id="smtpUseTLS">
+                                <option value="true">是</option>
+                                <option value="false">否</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <button class="btn btn-success" onclick="testSMTP()">測試 SMTP</button>
+                            <button class="btn btn-primary" onclick="updateSMTP()">儲存 SMTP 設定</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 週報排程設定 -->
+                    <div class="config-card">
+                        <h3>週報排程設定（CISO 週報）</h3>
+                        <div class="form-group">
+                            <label>星期</label>
+                            <select id="weeklyDay">
+                                <option value="mon">週一 (mon)</option>
+                                <option value="tue">週二 (tue)</option>
+                                <option value="wed">週三 (wed)</option>
+                                <option value="thu">週四 (thu)</option>
+                                <option value="fri">週五 (fri)</option>
+                                <option value="sat">週六 (sat)</option>
+                                <option value="sun">週日 (sun)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>小時（0-23）</label>
+                            <input type="number" id="weeklyHour" min="0" max="23" value="8">
+                        </div>
+                        <div class="form-group">
+                            <label>分鐘（0-59）</label>
+                            <input type="number" id="weeklyMinute" min="0" max="59" value="0">
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <button class="btn btn-primary" onclick="updateWeeklySchedule()">更新週報排程</button>
+                        </div>
+                    </div>
+
+                    <!-- 週報排程通知設定 -->
+                    <div class="config-card">
+                        <h3>週報排程通知設定</h3>
+                        <div class="alert alert-info" style="margin-bottom:10px; font-size: 0.9em;">
+                            設定週報通知的收件者與啟用狀態。可使用「測試週報寄送」驗證設定是否正確。
+                        </div>
+                        <div class="form-group">
+                            <label>通知總開關</label>
+                            <select id="notifEnabled">
+                                <option value="true">啟用</option>
+                                <option value="false">停用</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Email 通知</label>
+                            <select id="emailEnabledWeekly">
+                                <option value="false">停用</option>
+                                <option value="true">啟用</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>CISO Email</label>
+                            <input type="email" id="emailCISOWeekly" placeholder="ciso@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label>IT 團隊 Email</label>
+                            <input type="email" id="emailITWeekly" placeholder="it@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label>週報收件者</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <label><input type="checkbox" id="typeWeeklyCISOConfig"> CISO</label>
+                                    <label><input type="checkbox" id="typeWeeklyITConfig"> IT</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button class="btn btn-primary" onclick="saveWeeklyNotificationConfig()">儲存週報通知設定</button>
+                            <button class="btn btn-success" onclick="testSendWeekly()">測試週報寄送</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手動立即觸發按鈕 -->
+                <div class="config-card" style="margin-top: 20px;">
+                    <h3>手動立即觸發</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="triggerCollectors()">觸發收集任務</button>
+                        <button class="btn btn-success" onclick="triggerCorrelation()">觸發關聯分析</button>
+                        <button class="btn btn-success" onclick="triggerAll()">觸發全部（收集+分析）</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -631,10 +632,10 @@
             // 顯示選中的頁籤內容
             if (tabName === 'settings') {
                 document.getElementById('settings-tab').classList.add('active');
-                document.querySelectorAll('.tab-button')[0].classList.add('active');
+                document.querySelectorAll('.tab-button')[1].classList.add('active');
             } else if (tabName === 'status') {
                 document.getElementById('status-tab').classList.add('active');
-                document.querySelectorAll('.tab-button')[1].classList.add('active');
+                document.querySelectorAll('.tab-button')[0].classList.add('active');
             }
         }
 

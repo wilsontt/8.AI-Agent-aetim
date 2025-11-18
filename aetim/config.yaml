@@ -28,9 +28,9 @@ reporting:
     enabled: true
     schedule: monday 08:00
     schedule_struct:
-      day_of_week: mon
-      hour: 15
-      minute: 47
+      day_of_week: tue
+      hour: 14
+      minute: 0
       timezone: Asia/Taipei
   output_dir: ./reports
   templates:
