@@ -19,6 +19,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            padding-top: 100px; /* 為固定標題留出空間 */
         }
 
         .container {
@@ -30,22 +31,30 @@
             overflow: hidden;
         }
 
-        /* 上半部：標題與時間 */
+        /* 上半部：標題與時間 - 固定位置 */
         .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
-            text-align: center;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .header h1 {
             font-size: 2.5em;
-            margin-bottom: 15px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 0;
         }
 
         .header .datetime {
-            font-size: 1.3em;
+            font-size: 1.8em;
             font-weight: 300;
             opacity: 0.95;
         }
@@ -307,6 +316,9 @@
             background: #f8f9fa;
             border-bottom: 2px solid #e0e0e0;
             padding: 0 30px;
+            position: sticky;
+            top: 0; /* 固定在容器頂部，因為 header 已經在 body 層級 */
+            z-index: 999;
         }
 
         .tab-button {
@@ -344,21 +356,22 @@
     </style>
 </head>
 <body>
+    <!-- 上半部：標題與時間 - 固定在頂部 -->
+    <div class="header">
+        <h1>AETIM - 自動化威脅情資管理系統</h1>
+        <div class="datetime" id="datetime"></div>
+    </div>
+    
     <div class="container">
-        <!-- 上半部：標題與時間 -->
-        <div class="header">
-            <h1>AETIM - 自動化威脅情資管理系統</h1>
-            <div class="datetime" id="datetime"></div>
-        </div>
         
         <!-- 頁籤導航 -->
         <div class="tabs">
-            <button class="tab-button" onclick="switchTab('status')">處理狀態與報告</button>
-            <button class="tab-button active" onclick="switchTab('settings')">設定與控制</button>
+            <button class="tab-button active" onclick="switchTab('status')">處理狀態與報告</button>
+            <button class="tab-button" onclick="switchTab('settings')">設定與控制</button>
         </div>
         
         <!-- 下半部：頁籤內容顯示 --><!-- 頁籤 1：處理狀態與報告 -->
-        <div id="status-tab" class="tab-content">
+        <div id="status-tab" class="tab-content active">
             <div class="bottom-section" style="padding: 0; background: transparent; border: none;">
                 <div class="status-grid">
                     <!-- 收集任務狀態 -->
@@ -430,7 +443,10 @@
                     <div style="margin-bottom:10px">
                         <button class="btn btn-primary" onclick="refreshWeeklyJobs()">重新整理</button>
                         <button class="btn btn-success" onclick="testSendWeekly()">測試寄送（使用最新報告）</button>
+                        <button class="btn btn-info" onclick="checkWeeklyScheduleStatus()" style="font-size: 1.1em; font-weight: bold;">檢查排程狀態</button>
+                        <button class="btn btn-secondary" onclick="clearWeeklyScheduleStatus()" style="font-size: 1.0em;">清除檢查診斷資訊</button>
                     </div>
+                    <div id="weeklyScheduleStatus" class="alert" style="display:none; margin-top:10px; white-space: pre-wrap; font-family: monospace; font-size: 1.2em; line-height: 1.6;"></div>
                     <div id="weeklyJobsSummary" class="alert alert-info" style="display:none;"></div>
                     <div class="log-container" style="max-height: 300px;">
                         <table style="width:100%; border-collapse: collapse;">
@@ -451,7 +467,7 @@
         </div>
 
         <!-- 頁籤 2：設定與控制 -->
-        <div id="settings-tab" class="tab-content active">
+        <div id="settings-tab" class="tab-content">
             <div class="middle-section" style="padding: 0; background: transparent; border: none;">
                 <div class="config-grid">
                     <!-- 排程設定（整合基本排程與動態排程） -->
@@ -1418,6 +1434,240 @@
                 }
             } catch (e) {
                 alert('測試寄送失敗：' + e.message);
+            }
+        }
+
+        function clearWeeklyScheduleStatus() {
+            const statusDiv = document.getElementById('weeklyScheduleStatus');
+            statusDiv.style.display = 'none';
+            statusDiv.innerText = '';
+        }
+
+        async function checkWeeklyScheduleStatus() {
+            const statusDiv = document.getElementById('weeklyScheduleStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'alert alert-info';
+            statusDiv.innerText = '正在檢查排程狀態...';
+            
+            try {
+                const res = await fetch('/api/weekly-jobs/schedule-status');
+                const data = await res.json();
+                
+                if (data.success) {
+                    // 獲取當前時間（台灣時區）- 使用服務器返回的時間更準確
+                    const serverTime = new Date(data.current_time);
+                    const checkTime = serverTime.toLocaleString('zh-TW', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        timeZone: 'Asia/Taipei',
+                        hour12: false
+                    }).replace(/\//g, '-');
+                    
+                    let statusText = `=== 週報排程診斷資訊 ===\n`;
+                    statusText += `檢查時間: ${checkTime}\n\n`;
+                    
+                    // 時間對比資訊
+                    statusText += '【時間對比檢查】\n';
+                    statusText += `  Web App (aetim-web) 時間與時區設定：\n`;
+                    statusText += `    UTC: ${new Date(data.time_info.web_app.time_utc).toISOString()}\n`;
+                    statusText += `    Asia/Taipei: ${data.time_info.web_app.time_taipei_str}\n`;
+                    statusText += `    系統時區: ${data.time_info.web_app.system_timezone}\n`;
+                    statusText += `    環境變數 TZ: ${data.time_info.web_app.env_tz}\n`;
+                    if (data.time_info.web_app.system_tz_file) {
+                        statusText += `    /etc/timezone: ${data.time_info.web_app.system_tz_file}\n`;
+                    }
+                    if (data.time_info.web_app.localtime_link) {
+                        statusText += `    /etc/localtime 連結: ${data.time_info.web_app.localtime_link}\n`;
+                    }
+                    
+                    // 時區設定檢查
+                    const expectedTZ = 'Asia/Taipei';
+                    const envTZCorrect = data.time_info.web_app.env_tz === expectedTZ;
+                    const tzFileCorrect = data.time_info.web_app.system_tz_file === expectedTZ;
+                    
+                    if (envTZCorrect && tzFileCorrect) {
+                        statusText += `    ✓ 時區設定正確\n`;
+                    } else {
+                        statusText += `    ⚠ 時區設定檢查：\n`;
+                        if (!envTZCorrect) {
+                            statusText += `      - 環境變數 TZ 應為 "${expectedTZ}"，目前為 "${data.time_info.web_app.env_tz}"\n`;
+                        }
+                        if (!tzFileCorrect && data.time_info.web_app.system_tz_file) {
+                            statusText += `      - /etc/timezone 應為 "${expectedTZ}"，目前為 "${data.time_info.web_app.system_tz_file}"\n`;
+                        }
+                    }
+                    
+                    // Scheduler 時區設定資訊（從日誌中提取）
+                    if (data.scheduler.timezone_info) {
+                        statusText += `  Scheduler (aetim) 時區設定：\n`;
+                        const tzLines = data.scheduler.timezone_info.split('\n');
+                        tzLines.forEach(line => {
+                            if (line.trim()) {
+                                statusText += `    ${line}\n`;
+                            }
+                        });
+                        
+                        // 檢查時區設定是否正確
+                        const schedulerEnvTZ = tzLines.find(l => l.includes('環境變數 TZ:')) || '';
+                        const schedulerTZFile = tzLines.find(l => l.includes('/etc/timezone:')) || '';
+                        const expectedTZ = 'Asia/Taipei';
+                        const schedulerEnvTZCorrect = schedulerEnvTZ.includes(expectedTZ);
+                        const schedulerTZFileCorrect = schedulerTZFile.includes(expectedTZ);
+                        
+                        if (schedulerEnvTZCorrect && schedulerTZFileCorrect) {
+                            statusText += `    ✓ 時區設定正確\n`;
+                        } else {
+                            statusText += `    ⚠ 時區設定可能不正確\n`;
+                        }
+                    } else {
+                        statusText += `  Scheduler (aetim) 時區設定：\n`;
+                        statusText += `    ⚠ 無法從日誌中獲取時區設定資訊\n`;
+                        statusText += `    建議：\n`;
+                        statusText += `      1. 檢查 scheduler.out 日誌文件是否存在\n`;
+                        statusText += `      2. 確認排程器已重新載入排程（會輸出時區設定）\n`;
+                        statusText += `      3. 或直接在 scheduler 容器中執行：echo $TZ\n`;
+                    }
+                    
+                    // 時區對比總結
+                    statusText += '\n';
+                    statusText += `  【時區對比總結】\n`;
+                    const webTZCorrect = data.time_info.web_app.env_tz === 'Asia/Taipei' && 
+                                        (data.time_info.web_app.system_tz_file === 'Asia/Taipei' || !data.time_info.web_app.system_tz_file);
+                    if (data.scheduler.timezone_info) {
+                        const tzLines = data.scheduler.timezone_info.split('\n');
+                        const schedulerEnvTZ = tzLines.find(l => l.includes('環境變數 TZ:')) || '';
+                        const schedulerTZFile = tzLines.find(l => l.includes('/etc/timezone:')) || '';
+                        const schedulerTZCorrect = schedulerEnvTZ.includes('Asia/Taipei') && schedulerTZFile.includes('Asia/Taipei');
+                        
+                        if (webTZCorrect && schedulerTZCorrect) {
+                            statusText += `    ✓ 兩個容器的時區設定一致且正確 (Asia/Taipei)\n`;
+                        } else {
+                            statusText += `    ⚠ 兩個容器的時區設定不一致或不正確\n`;
+                            if (!webTZCorrect) {
+                                statusText += `      - Web App 時區設定有問題\n`;
+                            }
+                            if (!schedulerTZCorrect) {
+                                statusText += `      - Scheduler 時區設定有問題\n`;
+                            }
+                        }
+                    } else {
+                        if (webTZCorrect) {
+                            statusText += `    ✓ Web App 時區設定正確\n`;
+                            statusText += `    ⚠ 無法確認 Scheduler 時區設定（請檢查 scheduler 容器）\n`;
+                        } else {
+                            statusText += `    ⚠ Web App 時區設定有問題\n`;
+                            statusText += `    ⚠ 無法確認 Scheduler 時區設定（請檢查 scheduler 容器）\n`;
+                        }
+                    }
+                    statusText += '\n';
+                    
+                    // 設定資訊
+                    statusText += '【排程設定】\n';
+                    statusText += `  啟用狀態: ${data.config.enabled ? '✓ 已啟用' : '✗ 未啟用'}\n`;
+                    statusText += `  排程時間: ${data.config.schedule_str}\n`;
+                    statusText += `  時區: ${data.config.timezone}\n\n`;
+                    
+                    // 排程器狀態
+                    statusText += '【排程器狀態】\n';
+                    if (data.scheduler.running) {
+                        statusText += `  ✓ 排程器正在運行 (PID: ${data.scheduler.pid})\n`;
+                    } else {
+                        statusText += `  ✗ 排程器未運行\n`;
+                        if (data.scheduler.pid_file_exists) {
+                            statusText += `  ⚠ PID 文件存在但進程不存在（可能需要重啟）\n`;
+                        } else {
+                            statusText += `  ⚠ PID 文件不存在（排程器可能未啟動）\n`;
+                        }
+                    }
+                    statusText += '\n';
+                    
+                    // 下次執行時間
+                    statusText += '【下次執行時間】\n';
+                    if (data.next_run.calculated) {
+                        statusText += `  時間: ${data.next_run.time_str}\n`;
+                        
+                        // 修正倒數時間計算：正確處理時區
+                        // 使用服務器返回的 ISO 時間字符串，它們已經包含時區信息
+                        const nextRunTime = new Date(data.next_run.time);
+                        const currentTime = new Date(data.current_time);
+                        
+                        // 計算時間差（毫秒）
+                        const diffMs = nextRunTime.getTime() - currentTime.getTime();
+                        
+                        if (diffMs < 0) {
+                            statusText += `  倒數: 已過期（時間已過）\n`;
+                        } else {
+                            const totalSeconds = Math.floor(diffMs / 1000);
+                            const diffHours = Math.floor(totalSeconds / 3600);
+                            const diffMins = Math.floor((totalSeconds % 3600) / 60);
+                            const diffSecs = totalSeconds % 60;
+                            
+                            if (diffHours > 0) {
+                                statusText += `  倒數: ${diffHours} 小時 ${diffMins} 分鐘 ${diffSecs} 秒\n`;
+                            } else if (diffMins > 0) {
+                                statusText += `  倒數: ${diffMins} 分鐘 ${diffSecs} 秒\n`;
+                            } else {
+                                statusText += `  倒數: ${diffSecs} 秒\n`;
+                            }
+                        }
+                    } else {
+                        statusText += `  ⚠ 無法計算下次執行時間（設定可能不完整）\n`;
+                    }
+                    statusText += '\n';
+                    
+                    // 最近觸發
+                    statusText += '【最近觸發記錄】\n';
+                    if (data.last_triggered) {
+                        const lastTime = new Date(data.last_triggered);
+                        statusText += `  時間: ${lastTime.toLocaleString('zh-TW', {timeZone: 'Asia/Taipei'})}\n`;
+                    } else {
+                        statusText += `  （無記錄）\n`;
+                    }
+                    statusText += '\n';
+                    
+                    // APScheduler 日誌資訊
+                    if (data.scheduler.apscheduler_log_info) {
+                        statusText += '【APScheduler 日誌資訊】\n';
+                        statusText += `  ${data.scheduler.apscheduler_log_info}\n\n`;
+                    }
+                    
+                    // 診斷結果
+                    statusText += '【診斷結果】\n';
+                    const diag = data.diagnosis;
+                    if (diag.scheduler_not_running) {
+                        statusText += '  ✗ 排程器未運行 - 需要啟動排程器服務\n';
+                    }
+                    if (diag.schedule_not_configured) {
+                        statusText += '  ✗ 排程設定不完整 - 請檢查設定檔\n';
+                    }
+                    if (diag.should_have_triggered) {
+                        statusText += '  ⚠ 設定的執行時間已過 - 排程器可能未正確觸發\n';
+                        statusText += '  ⚠ 建議檢查：\n';
+                        statusText += '    1. 查看排程器日誌 (scheduler.out) 是否有錯誤\n';
+                        statusText += '    2. 確認 APScheduler 任務是否正確註冊\n';
+                        statusText += '    3. 檢查系統時區設定是否正確\n';
+                        statusText += '    4. 嘗試重新載入排程：kill -USR2 <scheduler_pid>\n';
+                    }
+                    if (!diag.scheduler_not_running && !diag.schedule_not_configured && !diag.should_have_triggered) {
+                        statusText += '  ✓ 所有檢查通過，排程應該正常運行\n';
+                    }
+                    
+                    statusDiv.className = 'alert alert-info';
+                    statusDiv.innerText = statusText;
+                } else {
+                    statusDiv.className = 'alert alert-danger';
+                    statusDiv.innerText = '檢查失敗：' + (data.error || '未知錯誤');
+                    if (data.traceback) {
+                        statusDiv.innerText += '\n\n詳細錯誤：\n' + data.traceback;
+                    }
+                }
+            } catch (e) {
+                statusDiv.className = 'alert alert-danger';
+                statusDiv.innerText = '檢查失敗：' + e.message;
             }
         }
 

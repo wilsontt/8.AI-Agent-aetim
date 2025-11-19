@@ -658,6 +658,194 @@ def list_weekly_jobs():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/weekly-jobs/schedule-status', methods=['GET'])
+def get_weekly_schedule_status():
+    """檢查週報排程狀態和診斷資訊"""
+    try:
+        from datetime import timedelta
+        from zoneinfo import ZoneInfo
+        
+        config = load_config()
+        reporting = config.get('reporting', {})
+        weekly = reporting.get('weekly_report', {})
+        enabled = weekly.get('enabled', False)
+        schedule_struct = weekly.get('schedule_struct', {})
+        
+        # 讀取排程設定
+        day = str(schedule_struct.get('day_of_week', '')).lower()
+        hour = schedule_struct.get('hour', None)
+        minute = schedule_struct.get('minute', None)
+        timezone_str = schedule_struct.get('timezone', 'Asia/Taipei')
+        
+        # 檢查排程器是否運行
+        scheduler_pid_file = os.path.join(os.path.dirname(__file__), 'scheduler.pid')
+        scheduler_running = os.path.exists(scheduler_pid_file)
+        scheduler_pid = None
+        apscheduler_job_info = None
+        if scheduler_running:
+            try:
+                with open(scheduler_pid_file, 'r') as f:
+                    scheduler_pid = int(f.read().strip())
+                # 檢查進程是否真的存在
+                try:
+                    os.kill(scheduler_pid, 0)  # 發送信號 0 檢查進程是否存在
+                except OSError:
+                    scheduler_running = False
+            except Exception:
+                scheduler_running = False
+            
+            # 嘗試從排程器日誌或狀態文件讀取 APScheduler 的實際 job 資訊和時區設定
+            # 注意：這裡無法直接訪問 scheduler 實例，所以只能通過其他方式檢查
+            # 可以檢查 scheduler.out 日誌文件
+            scheduler_log_file = os.path.join(os.path.dirname(__file__), '..', 'scheduler.out')
+            scheduler_tz_info = None
+            if os.path.exists(scheduler_log_file):
+                try:
+                    # 讀取最後幾行日誌，查找 job 資訊和時區設定
+                    with open(scheduler_log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                        lines = f.readlines()
+                        # 查找包含 "job_weekly_report" 或 "下次執行時間" 的行
+                        for i, line in enumerate(reversed(lines[-200:])):  # 檢查最後200行
+                            if 'job_weekly_report' in line or '下次執行時間' in line or 'APScheduler' in line:
+                                apscheduler_job_info = line.strip()
+                            # 查找時區設定資訊
+                            if 'Scheduler 時區設定' in line or '環境變數 TZ:' in line:
+                                # 讀取接下來的幾行來獲取完整的時區資訊
+                                tz_lines = []
+                                # 計算實際索引（從後往前）
+                                actual_idx = len(lines) - 200 + (200 - i - 1)
+                                for j in range(actual_idx, min(actual_idx + 5, len(lines))):
+                                    tz_lines.append(lines[j].strip())
+                                scheduler_tz_info = '\n'.join(tz_lines)
+                                break
+                except Exception:
+                    pass
+        
+        # 獲取 Web App 的系統時間和時區資訊
+        import time as time_module
+        import os as os_module
+        
+        web_app_time_utc = datetime.now(ZoneInfo('UTC'))
+        web_app_time_taipei = datetime.now(ZoneInfo('Asia/Taipei'))
+        
+        # 檢查系統時區設定
+        web_app_system_timezone = time_module.tzname[0] if time_module.tzname else 'Unknown'
+        web_app_timezone_offset = time_module.timezone if hasattr(time_module, 'timezone') else None
+        
+        # 檢查環境變數 TZ
+        web_app_env_tz = os_module.environ.get('TZ', 'Not Set')
+        
+        # 嘗試讀取系統時區文件
+        web_app_system_tz_file = None
+        try:
+            if os_module.path.exists('/etc/timezone'):
+                with open('/etc/timezone', 'r') as f:
+                    web_app_system_tz_file = f.read().strip()
+        except Exception:
+            pass
+        
+        # 嘗試讀取 /etc/localtime 連結
+        web_app_localtime_link = None
+        try:
+            if os_module.path.islink('/etc/localtime'):
+                web_app_localtime_link = os_module.readlink('/etc/localtime')
+        except Exception:
+            pass
+        
+        # 嘗試從 scheduler 日誌獲取時區設定資訊（不提取時間，只提取時區設定）
+        # 注意：由於兩個容器是分開的，我們無法直接訪問 scheduler 容器的環境變數
+        # 但可以從日誌中提取時區設定資訊來對比
+        
+        # 計算應該的下次執行時間
+        taipei_tz = ZoneInfo(timezone_str)
+        now = datetime.now(taipei_tz)
+        
+        next_run_time = None
+        next_run_str = None
+        days_map = {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}
+        
+        if enabled and day in days_map and hour is not None and minute is not None:
+            target_weekday = days_map.get(day, 0)
+            current_weekday = now.weekday()
+            
+            # 計算到下一個目標星期幾的天數
+            days_ahead = target_weekday - current_weekday
+            if days_ahead < 0 or (days_ahead == 0 and (now.hour > hour or (now.hour == hour and now.minute >= minute))):
+                days_ahead += 7  # 下週
+            
+            next_run_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=days_ahead)
+            next_run_str = next_run_time.strftime('%Y-%m-%d %H:%M:%S %Z')
+        
+        # 檢查最近的週報事件
+        recent_events = job_events.list_recent_events(limit=5)
+        last_triggered = None
+        if recent_events:
+            # 找到最近的非測試事件（phase 為 'scheduled'）
+            for event in recent_events:
+                if event.get('phase') == 'scheduled':
+                    last_triggered = event.get('triggered_at')
+                    break
+        
+        # 檢查是否應該已經觸發但沒有觸發
+        should_have_triggered = False
+        if next_run_time and next_run_time < now:
+            should_have_triggered = True
+        
+        return jsonify({
+            'success': True,
+            'config': {
+                'enabled': enabled,
+                'day_of_week': day,
+                'hour': hour,
+                'minute': minute,
+                'timezone': timezone_str,
+                'schedule_str': f'{day} {hour:02d}:{minute:02d}' if hour is not None and minute is not None else '未設定'
+            },
+            'time_info': {
+                'web_app': {
+                    'time_utc': web_app_time_utc.isoformat(),
+                    'time_taipei': web_app_time_taipei.isoformat(),
+                    'time_taipei_str': web_app_time_taipei.strftime('%Y-%m-%d %H:%M:%S %Z'),
+                    'system_timezone': web_app_system_timezone,
+                    'timezone_offset': web_app_timezone_offset,
+                    'env_tz': web_app_env_tz,
+                    'system_tz_file': web_app_system_tz_file,
+                    'localtime_link': web_app_localtime_link
+                },
+                'timezone_comparison': {
+                    'web_app_tz_correct': web_app_env_tz == 'Asia/Taipei' and (web_app_system_tz_file == 'Asia/Taipei' if web_app_system_tz_file else False),
+                    'note': 'Scheduler 時區設定需從日誌中查看，或直接檢查 scheduler 容器'
+                }
+            },
+            'scheduler': {
+                'running': scheduler_running,
+                'pid': scheduler_pid,
+                'pid_file_exists': os.path.exists(scheduler_pid_file),
+                'apscheduler_log_info': apscheduler_job_info,
+                'timezone_info': scheduler_tz_info
+            },
+            'next_run': {
+                'time': next_run_time.isoformat() if next_run_time else None,
+                'time_str': next_run_str,
+                'calculated': next_run_time is not None
+            },
+            'last_triggered': last_triggered,
+            'current_time': now.isoformat(),
+            'diagnosis': {
+                'scheduler_not_running': not scheduler_running,
+                'schedule_not_configured': not (enabled and day in days_map and hour is not None and minute is not None),
+                'time_passed': should_have_triggered,
+                'should_have_triggered': should_have_triggered
+            }
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
 @app.route('/api/weekly-jobs/test-send', methods=['POST'])
 def test_send_weekly():
     """使用最新報告試寄週報到指定收件者（或使用 config 的 to_address）"""
