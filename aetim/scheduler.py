@@ -88,7 +88,11 @@ def reschedule_weekly_report(scheduler):
             db_conn = None
             ev = None
             try:
-                print(f"\n[{datetime.now()}] --- 觸發週報生成任務 ---")
+                from zoneinfo import ZoneInfo
+                taipei_tz = ZoneInfo("Asia/Taipei")
+                trigger_time = datetime.now(taipei_tz)
+                print(f"\n[{trigger_time.strftime('%Y-%m-%d %H:%M:%S %Z')}] --- 觸發週報生成任務 ---")
+                print(f"[週報] 排程觸發時間：{trigger_time.isoformat()}")
                 ev = start_event({'phase': 'scheduled', 'message': '週報排程已觸發'})
                 cfg = load_config()
                 
@@ -303,13 +307,25 @@ def reschedule_weekly_report(scheduler):
                     db_conn.close()
 
         # 建立 CronTrigger（固定 Asia/Taipei）
-        trigger = CronTrigger(day_of_week=day, hour=hour, minute=minute, timezone="Asia/Taipei")
+        # 注意：APScheduler 的 day_of_week 參數支援 'mon', 'tue' 等格式
+        print(f"[週報排程] 準備註冊任務：day_of_week={day}, hour={hour}, minute={minute}, timezone=Asia/Taipei")
+        
+        trigger = CronTrigger(
+            day_of_week=day, 
+            hour=hour, 
+            minute=minute, 
+            timezone="Asia/Taipei"
+        )
+        
         scheduler.add_job(
             generate_weekly_report_job,
             trigger=trigger,
             id="job_weekly_report",
-            replace_existing=True
+            replace_existing=True,
+            max_instances=1  # 確保同一時間只有一個實例運行
         )
+        
+        print(f"[週報排程] 任務已註冊到 APScheduler (job_id=job_weekly_report)")
         
         # 計算並顯示下次執行時間
         from datetime import datetime, timedelta
@@ -327,11 +343,60 @@ def reschedule_weekly_report(scheduler):
         if days_ahead < 0 or (days_ahead == 0 and (now.hour > hour or (now.hour == hour and now.minute >= minute))):
             days_ahead += 7  # 下週
         
+        # 使用當前時間的時區來建立目標時間
         next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=days_ahead)
+        # 確保時區正確
+        if next_run.tzinfo is None:
+            next_run = next_run.replace(tzinfo=taipei_tz)
         
-        print(f"--- 週報排程已設定：每週 {day} {hour:02d}:{minute:02d} 生成 CISO 週報 ---")
-        print(f"--- 下次執行時間：{next_run.strftime('%Y-%m-%d %H:%M:%S %Z')} ---")
+        # 從 APScheduler 獲取實際的下次執行時間（更準確）
+        try:
+            # 等待一下讓 job 註冊完成
+            import time
+            time.sleep(0.1)
+            registered_job = scheduler.get_job("job_weekly_report")
+            if registered_job and registered_job.next_run_time:
+                next_run = registered_job.next_run_time
+                print(f"--- 週報排程已設定：每週 {day} {hour:02d}:{minute:02d} 生成 CISO 週報 ---")
+                print(f"--- 下次執行時間（APScheduler）：{next_run.strftime('%Y-%m-%d %H:%M:%S %Z')} ---")
+            else:
+                print(f"--- 週報排程已設定：每週 {day} {hour:02d}:{minute:02d} 生成 CISO 週報 ---")
+                print(f"--- 下次執行時間（計算值）：{next_run.strftime('%Y-%m-%d %H:%M:%S %Z')} ---")
+                print(f"--- 警告：APScheduler 尚未計算下次執行時間 ---")
+        except Exception as e:
+            print(f"--- 週報排程已設定：每週 {day} {hour:02d}:{minute:02d} 生成 CISO 週報 ---")
+            print(f"--- 下次執行時間（計算值）：{next_run.strftime('%Y-%m-%d %H:%M:%S %Z')} ---")
+            print(f"--- 無法從 APScheduler 獲取下次執行時間：{e} ---")
+        
         print(f"--- 當前時間：{now.strftime('%Y-%m-%d %H:%M:%S %Z')} ---")
+        
+        # 輸出時區設定資訊以便診斷
+        import os as os_module
+        env_tz = os_module.environ.get('TZ', 'Not Set')
+        system_tz_file = None
+        try:
+            if os_module.path.exists('/etc/timezone'):
+                with open('/etc/timezone', 'r') as f:
+                    system_tz_file = f.read().strip()
+        except Exception:
+            pass
+        localtime_link = None
+        try:
+            if os_module.path.islink('/etc/localtime'):
+                localtime_link = os_module.readlink('/etc/localtime')
+        except Exception:
+            pass
+        
+        print(f"--- Scheduler 時區設定：---")
+        print(f"  環境變數 TZ: {env_tz}")
+        if system_tz_file:
+            print(f"  /etc/timezone: {system_tz_file}")
+        if localtime_link:
+            print(f"  /etc/localtime 連結: {localtime_link}")
+        
+        # 定期輸出當前時間以便診斷（每小時一次）
+        import sys
+        sys.stdout.flush()  # 確保輸出立即寫入
     except Exception as e:
         print(f"警告：重排程 weekly_report 失敗：{e}", file=sys.stderr)
 
@@ -526,6 +591,12 @@ if __name__ == "__main__":
             if current_time - last_check_time >= check_interval:
                 last_check_time = current_time
                 try:
+                    # 輸出當前時間以便診斷
+                    from zoneinfo import ZoneInfo
+                    taipei_tz = ZoneInfo("Asia/Taipei")
+                    now_dt = datetime.now(taipei_tz)
+                    print(f"[檢查] 當前時間：{now_dt.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+                    
                     # 檢查週報任務是否存在
                     weekly_job = scheduler.get_job("job_weekly_report")
                     if weekly_job:
@@ -543,6 +614,8 @@ if __name__ == "__main__":
                             reschedule_weekly_report(scheduler)
                 except Exception as e:
                     print(f"[檢查] 檢查週報排程時發生錯誤：{e}", file=sys.stderr)
+                import sys
+                sys.stdout.flush()  # 確保輸出立即寫入
             
     except (KeyboardInterrupt, SystemExit):
         print("--- 服務停止中，關閉排程器... ---")
